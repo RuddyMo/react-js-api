@@ -1,4 +1,6 @@
 import { createGame, updateGame } from "../controllers/games.js";
+import Game from "../models/games.js";
+import User from "../models/users.js";
 
 export function gamesRoutes(app) {
 	app.post(
@@ -86,6 +88,38 @@ export function gamesRoutes(app) {
 			} catch (error) {
 				console.error("Erreur lors de la récupération des parties:", error);
 				reply.code(500).send({ error: "Erreur lors de la récupération des parties" });
+			}
+		}
+	);
+	app.delete(
+		"/game/:gameId",
+		{
+			preHandler: [app.authenticate],
+			schema: {
+				params: {
+					type: 'object',
+					required: ['gameId'],
+					properties: {
+						gameId: { type: 'string' }
+					}
+				}
+			}
+		},
+		async (request, reply) => {
+			try {
+				const { gameId } = request.params;
+				const game = await Game.findByPk(gameId);
+
+				if (!game) {
+					reply.code(404).send({ error: "Partie non trouvée" });
+					return;
+				}
+
+				await game.destroy();
+				reply.code(200).send({ message: "Partie supprimée avec succès" });
+			} catch (error) {
+				console.error("Erreur lors de la suppression de la partie:", error);
+				reply.code(500).send({ error: "Erreur lors de la suppression de la partie" });
 			}
 		}
 	);
